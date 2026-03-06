@@ -28,6 +28,39 @@ cli-switch solves this by launching your chosen AI CLIs in a single tmux session
 
 ---
 
+## How is this different?
+
+| Tool | What it does | What cli-switch adds |
+|---|---|---|
+| **tmux** (raw) | Terminal multiplexer | cli-switch eliminates the manual setup -- no more split-pane, launch tools, configure keybindings every time |
+| **aichat** | Multi-model CLI (switch models in one tool) | Single session, one model at a time. Cannot run models simultaneously or compare outputs side-by-side |
+| **mods** (Charmbracelet) | Pipe-friendly AI CLI | Designed for scripting (`cat file \| mods "explain"`), not interactive parallel sessions |
+| **fabric** | AI prompt chaining | Sequential prompt pipelines, not parallel interactive sessions |
+| **aider** | AI pair programming | Deep git integration but single-model, not a multi-tool orchestrator |
+| **Terminal tabs** | What most people do today | No cross-session communication, no shared buffer, everything manual |
+
+**What cli-switch uniquely offers:**
+
+- **Parallel interactive sessions** -- run Claude, Gemini, and Copilot simultaneously and see all responses at once
+- **Cross-session communication** -- capture output from one AI and paste it as input to another
+- **Broadcast** -- ask the same question to multiple AIs at once and compare answers
+- **Zero lock-in** -- it does not wrap or replace any AI CLI, it just orchestrates them side-by-side
+
+**When cli-switch shines:**
+
+- Comparing AI outputs -- broadcast "write me a function" to 3 tools, pick the best answer
+- Cross-review workflows -- Claude writes code, Copilot reviews it, Gemini researches the approach
+- Team standardization -- everyone gets the same multi-tool setup with `.cli-switch.yaml` in the repo
+- AI evaluation -- testing the same prompts across models systematically
+
+**When you probably don't need it:**
+
+- You only use one AI CLI
+- You prefer IDE-integrated AI (Cursor, Copilot in VS Code)
+- You don't need side-by-side comparison
+
+---
+
 ## Quick Start
 
 ### Prerequisites
