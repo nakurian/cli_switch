@@ -1,0 +1,30 @@
+{
+  "name": "cli-switch",
+  "version": "0.1.0",
+  "description": "Launch and orchestrate multiple AI CLI tools (Claude, Gemini, Copilot) in parallel tmux sessions with cross-session communication",
+  "type": "module",
+  "bin": {
+    "cli-switch": "./bin/cli-switch.js"
+  },
+  "scripts": {
+    "test": "node --test src/**/*.test.js"
+  },
+  "keywords": [
+    "ai",
+    "cli",
+    "tmux",
+    "claude",
+    "gemini",
+    "copilot",
+    "multiplexer",
+    "orchestrator"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^13.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,21 @@
+# cli-switch configuration
+# Place this file in your project root or home directory (~/.cli-switch.yaml)
+
+# Which AI CLI tools to launch (in order)
+tools:
+  - claude
+  - gemini
+  - copilot
+
+# Layout: horizontal, vertical, tiled, main-horizontal, main-vertical
+layout: tiled
+
+# tmux session name
+session_name: ai-switch
+
+# Keybindings (used with tmux prefix, default Ctrl-b)
+keybindings:
+  capture: S
+  paste: P
+  broadcast: B
+  sync_toggle: Y
