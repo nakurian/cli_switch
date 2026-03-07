@@ -6,6 +6,9 @@
  *   prefix + P  → Paste shared buffer contents into current pane
  *   prefix + B  → Open a prompt, broadcast typed text to ALL panes
  *   prefix + Y  → Toggle synchronize-panes (type in all panes simultaneously)
+ *
+ * Mouse:
+ *   Drag to select → copies to system clipboard (pbcopy) and keeps selection visible
  */
 
 import { execFileSync } from 'node:child_process';
@@ -23,6 +26,11 @@ export function setupKeybindings(sessionName, config) {
 
   // Enable mouse support — click to select panes, drag to resize, scroll
   tmux('set-option', '-t', sessionName, 'mouse', 'on');
+
+  // Keep selection visible after mouse drag and copy to system clipboard.
+  // Default behavior cancels copy mode on mouse release, losing the selection.
+  tmux('bind-key', '-T', 'copy-mode', 'MouseDragEnd1Pane', 'send-keys', '-X', 'copy-pipe', 'pbcopy');
+  tmux('bind-key', '-T', 'copy-mode-vi', 'MouseDragEnd1Pane', 'send-keys', '-X', 'copy-pipe', 'pbcopy');
 
   // Capture: grab last 50 lines from active pane → shared buffer file
   // Then display a brief message confirming capture
@@ -83,10 +91,12 @@ export function setupKeybindings(sessionName, config) {
 
   // Click anywhere on the status bar → popup menu
   // Use MouseUp (not MouseDown) so the release event doesn't immediately close the menu.
-  // Bind MouseDown to a no-op to suppress default status bar behavior.
-  tmux('bind-key', '-n', 'MouseDown1StatusLeft', 'send-keys', '');
-  tmux('bind-key', '-n', 'MouseDown1StatusRight', 'send-keys', '');
-  tmux('bind-key', '-n', 'MouseDown1Status', 'send-keys', '');
+  // Suppress default MouseDown status bar behavior with a no-op.
+  // NOTE: Do NOT use 'send-keys' here — it injects input into the active pane
+  // and breaks mouse tracking / pane selection.
+  tmux('bind-key', '-n', 'MouseDown1StatusLeft', 'run-shell', 'true');
+  tmux('bind-key', '-n', 'MouseDown1StatusRight', 'run-shell', 'true');
+  tmux('bind-key', '-n', 'MouseDown1Status', 'run-shell', 'true');
   tmux('bind-key', '-n', 'MouseUp1StatusLeft', ...menuCmd);
   tmux('bind-key', '-n', 'MouseUp1StatusRight', ...menuCmd);
   tmux('bind-key', '-n', 'MouseUp1Status', ...menuCmd);

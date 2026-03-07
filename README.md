@@ -20,7 +20,7 @@ cli-switch solves this by launching your chosen AI CLIs in a single tmux session
 - **Broadcast** -- send the same prompt to every pane simultaneously, from a keybinding or from another terminal.
 - **Synchronized typing** -- toggle sync mode so keystrokes go to all panes at once. A bright `SYNC ON` indicator appears in the status bar when active.
 - **Clickable action menu** -- click anywhere on the status bar or press `Ctrl-b Space` to open a popup menu with all actions (capture, paste, broadcast, sync, kill, layout switching, and more).
-- **Mouse support** -- click to focus a pane, drag to resize, scroll to review history.
+- **Mouse support** -- click to focus a pane, drag to resize, scroll to review history. Drag to select text and it is automatically copied to the system clipboard (macOS).
 - **Selective kill** -- kill individual panes by index or tool name without tearing down the whole session.
 - **Status bar** -- styled bottom bar showing `[MENU]` button, session info, pane count, keybinding hints, sync indicator, and a clock.
 - **YAML config file** -- set default tools, layout, session name, and keybindings in `.cli-switch.yaml`.
@@ -151,6 +151,7 @@ All keybindings use the tmux prefix (default `Ctrl-b`), followed by the key list
 | `Ctrl-b` + arrow keys | Switch focus between panes                          |
 | Click status bar       | Open the action menu                               |
 | Click pane             | Select/focus a pane                                |
+| Drag to select text    | Copy selection to system clipboard (macOS)         |
 | Drag pane border       | Resize panes                                       |
 
 When sync mode is active, a bright `SYNC ON` badge appears in the status bar. Press `Ctrl-b Y` again (or use the menu) to turn it off.
@@ -304,7 +305,7 @@ cli-switch is a thin orchestration layer built on top of [tmux](https://github.c
 
 6. **Status bar** -- tmux `set-option` configures a styled status bar with a `[MENU]` button, session info, pane count, keybinding hints, a `SYNC ON` indicator, and a clock.
 
-7. **Mouse** -- tmux mouse mode is enabled so you can click panes, drag borders, scroll, and click the status bar to open the action menu.
+7. **Mouse** -- tmux mouse mode is enabled so you can click panes, drag borders, scroll, and click the status bar to open the action menu. Dragging to select text copies it to the system clipboard via `pbcopy` (macOS) and keeps the selection visible.
 
 8. **Action menu** -- `display-menu` creates a popup menu triggered by clicking the status bar or pressing `Ctrl-b Space`. The menu provides all actions without needing to remember keybindings.
 
