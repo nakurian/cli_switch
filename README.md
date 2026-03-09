@@ -24,7 +24,9 @@ cli-switch solves this by launching your chosen AI CLIs in a single tmux session
 - **Selective kill** -- kill individual panes by index or tool name without tearing down the whole session.
 - **Status bar** -- styled bottom bar showing `[MENU]` button, session info, pane count, keybinding hints, sync indicator, and a clock.
 - **YAML config file** -- set default tools, layout, session name, and keybindings in `.cli-switch.yaml`.
-- **CLI subcommands** -- broadcast, capture, paste, kill, stop, and status commands usable from any terminal.
+- **Multiple concurrent sessions** -- launch as many sessions as you want. Names auto-increment (`ai-switch`, `ai-switch-2`, `ai-switch-3`, ...) so sessions never collide.
+- **Session management** -- list all active sessions, stop individual sessions by name, or tear down everything with `--all`.
+- **CLI subcommands** -- broadcast, capture, paste, kill, stop, sessions, and status commands usable from any terminal.
 
 ---
 
@@ -178,8 +180,17 @@ cli-switch kill 0 2
 # Kill all panes (tears down the session)
 cli-switch kill all
 
-# Stop the entire session
+# List all active cli-switch sessions
+cli-switch sessions
+
+# Stop a specific session by name
+cli-switch stop ai-switch-2
+
+# Stop the default session
 cli-switch stop
+
+# Stop ALL cli-switch sessions at once
+cli-switch stop --all
 
 # Check session status and list active panes
 cli-switch status
@@ -199,6 +210,44 @@ A typical cross-tool review workflow:
 5. **Paste** the captured output: click the status bar and select "Paste from buffer" (or press `Ctrl-b P`).
 6. **Ask Copilot** to review the pasted code.
 7. Or skip the manual steps and **broadcast** the same question to both: use the menu's "Broadcast to all" (or press `Ctrl-b B`).
+
+### Multiple Sessions
+
+You can launch multiple cli-switch sessions concurrently. Each new session gets an auto-incremented name:
+
+```bash
+# Terminal 1 — gets session "ai-switch"
+cli-switch claude gemini
+
+# Terminal 2 — gets session "ai-switch-2" (auto-incremented)
+cli-switch copilot aichat
+
+# Terminal 3 — gets session "ai-switch-3"
+cli-switch claude
+```
+
+Manage them from any terminal:
+
+```bash
+# See all running sessions with status and age
+cli-switch sessions
+#   ai-switch    (attached, 12m — claude, gemini)
+#   ai-switch-2  (detached, 3m — copilot, aichat)
+#   ai-switch-3  (attached, 1m — claude)
+#   Total: 3 session(s)
+
+# Stop a specific session
+cli-switch stop ai-switch-2
+
+# Stop all sessions at once
+cli-switch stop --all
+```
+
+You can also force a specific session name with `-s`:
+
+```bash
+cli-switch claude gemini -s my-project
+```
 
 ---
 
@@ -293,7 +342,7 @@ tools:
 
 cli-switch is a thin orchestration layer built on top of [tmux](https://github.com/tmux/tmux).
 
-1. **Session creation** -- `tmux new-session` creates a detached session, and `split-window` adds a pane for each requested tool. The configured layout (`select-layout`) arranges them.
+1. **Session creation** -- `tmux new-session` creates a detached session, and `split-window` adds a pane for each requested tool. The configured layout (`select-layout`) arranges them. If a session with the requested name already exists, the name is auto-incremented (e.g., `ai-switch-2`) so multiple sessions can run concurrently without conflict.
 
 2. **Tool launch** -- Each pane receives a `send-keys` command that starts the corresponding AI CLI (e.g., `claude`, `gemini`).
 

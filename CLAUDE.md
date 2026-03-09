@@ -11,13 +11,15 @@ bin/cli-switch.js    → CLI entry point (commander.js), subcommands, launches t
 src/
   tools.js           → AI tool registry (name, command, detection). Add new tools here.
   config.js          → Config loader. Reads .cli-switch.yaml from cwd or home dir.
-  tmux.js            → tmux primitives: session/pane create, kill, send-keys, capture-pane.
+  tmux.js            → tmux primitives: session/pane create, kill, send-keys, capture-pane, multi-session management.
   bus.js             → Shared buffer (file-based) at ~/.cli-switch/shared-buffer.txt
   keybindings.js     → tmux keybinding setup, clickable action menu, status bar styling
   broadcast.js       → Send prompts to multiple panes
 ```
 
 **Key design**: All inter-pane communication goes through tmux's `send-keys` (inject input) and `capture-pane` (grab output). The shared buffer is a plain file at `~/.cli-switch/shared-buffer.txt`.
+
+**Multi-session**: Sessions auto-increment (`ai-switch`, `ai-switch-2`, ...) via `nextSessionName()` in `tmux.js`. `listSessionsByPrefix()` finds all sessions matching the base name. `createSession()` no longer kills existing sessions — it expects a unique name from the caller.
 
 ## Code Conventions
 
@@ -46,14 +48,14 @@ Add to `bin/cli-switch.js` using commander's `.command()` API. Import needed fun
 
 ## Testing
 
-Run `cli-switch` outside of tmux to test. Use `cli-switch stop` to clean up sessions.
+Run `cli-switch` outside of tmux to test. Use `cli-switch stop` to clean up a single session, `cli-switch stop --all` to clean up all sessions, and `cli-switch sessions` to list active sessions.
 Syntax check: `node --check bin/cli-switch.js && node --check src/*.js`
 
 ## Important Notes
 
 - cli-switch MUST be run outside of tmux (it creates and attaches to its own session)
 - tmux is a hard requirement — the tool will not work without it
-- The shared buffer at `~/.cli-switch/` persists between sessions
+- The shared buffer at `~/.cli-switch/` persists between sessions and is shared across all concurrent sessions
 - Pane indices shift when a pane is killed — the `kill` command handles this by killing in reverse order
 - tmux layout names are counterintuitive: `even-horizontal` = side by side (|||), `even-vertical` = stacked (===). The UI uses visual labels to avoid confusion.
 - Status bar mouse bindings use `MouseUp1` (not `MouseDown1`) to prevent the menu from closing immediately on click

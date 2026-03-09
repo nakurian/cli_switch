@@ -36,6 +36,38 @@ export function sessionExists(sessionName) {
   }
 }
 
+/**
+ * List all active tmux sessions whose names start with the given base name.
+ * Returns an array of { name, windows, created, attached } objects.
+ */
+export function listSessionsByPrefix(baseName) {
+  try {
+    const output = tmux(
+      'list-sessions',
+      '-F', '#{session_name}|#{session_windows}|#{session_created}|#{session_attached}'
+    );
+    return output.split('\n')
+      .map(line => {
+        const [name, windows, created, attached] = line.split('|');
+        return { name, windows: parseInt(windows), created: parseInt(created), attached: parseInt(attached) };
+      })
+      .filter(s => s.name === baseName || s.name.startsWith(`${baseName}-`));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Find the next available session name by auto-incrementing.
+ * ai-switch → ai-switch-2 → ai-switch-3 → ...
+ */
+export function nextSessionName(baseName) {
+  if (!sessionExists(baseName)) return baseName;
+  let i = 2;
+  while (sessionExists(`${baseName}-${i}`)) i++;
+  return `${baseName}-${i}`;
+}
+
 export function killSession(sessionName) {
   try {
     tmux('kill-session', '-t', sessionName);
@@ -49,10 +81,6 @@ export function killSession(sessionName) {
  * Returns the session name.
  */
 export function createSession(sessionName, tools, layout) {
-  if (sessionExists(sessionName)) {
-    killSession(sessionName);
-  }
-
   // Create session with first tool
   const firstTool = tools[0];
   tmux(

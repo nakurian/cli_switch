@@ -13,6 +13,8 @@ import {
   killSession,
   killPane,
   listPaneProcesses,
+  listSessionsByPrefix,
+  nextSessionName,
   capturePane,
   sendKeys,
 } from '../src/tmux.js';
@@ -151,18 +153,61 @@ program
     }
   });
 
-// Stop subcommand
+// Sessions subcommand — list all active cli-switch sessions
 program
-  .command('stop')
-  .description('Kill the cli-switch tmux session')
-  .option('-s, --session <name>', 'tmux session name', 'ai-switch')
+  .command('sessions')
+  .description('List all active cli-switch sessions')
+  .option('-s, --session <name>', 'base session name to filter', 'ai-switch')
   .action((opts) => {
-    if (!sessionExists(opts.session)) {
-      console.log(`No active session "${opts.session}".`);
+    const sessions = listSessionsByPrefix(opts.session);
+    if (sessions.length === 0) {
+      console.log('No active cli-switch sessions.');
       return;
     }
-    killSession(opts.session);
-    console.log(`Session "${opts.session}" stopped.`);
+    console.log('Active sessions:\n');
+    for (const s of sessions) {
+      const age = formatAge(s.created);
+      const status = s.attached ? 'attached' : 'detached';
+      let paneInfo = '';
+      try {
+        const panes = listPaneProcesses(s.name);
+        paneInfo = ` — ${panes.map(p => p.command).join(', ')}`;
+      } catch { /* window may not be named 'ai' */ }
+      console.log(`  ${s.name}  (${status}, ${age}${paneInfo})`);
+    }
+    console.log(`\nTotal: ${sessions.length} session(s)`);
+    console.log('Stop one: cli-switch stop <session-name>');
+    console.log('Stop all: cli-switch stop --all');
+  });
+
+// Stop subcommand
+program
+  .command('stop [session]')
+  .description('Kill a cli-switch session by name, or --all to kill all')
+  .option('-a, --all', 'Kill all cli-switch sessions')
+  .option('-b, --base <name>', 'base session name for --all', 'ai-switch')
+  .action((session, opts) => {
+    if (opts.all) {
+      const sessions = listSessionsByPrefix(opts.base);
+      if (sessions.length === 0) {
+        console.log('No active cli-switch sessions.');
+        return;
+      }
+      for (const s of sessions) {
+        killSession(s.name);
+        console.log(`Stopped "${s.name}".`);
+      }
+      console.log(`Stopped ${sessions.length} session(s).`);
+      return;
+    }
+
+    const target = session || 'ai-switch';
+    if (!sessionExists(target)) {
+      console.log(`No active session "${target}".`);
+      return;
+    }
+    killSession(target);
+    console.log(`Session "${target}" stopped.`);
   });
 
 // Status subcommand
@@ -222,13 +267,19 @@ function launch(toolArgs, opts) {
     process.exit(1);
   }
 
+  // Auto-increment session name if it already exists
+  const sessionName = nextSessionName(config.session_name);
+  if (sessionName !== config.session_name) {
+    console.log(`Session "${config.session_name}" already exists. Using "${sessionName}" instead.`);
+  }
+
   console.log(`Launching ${tools.map(t => t.name).join(', ')} in ${config.layout} layout...`);
 
   // Create tmux session with panes
-  createSession(config.session_name, tools, config.layout);
+  createSession(sessionName, tools, config.layout);
 
   // Set up keybindings for cross-pane communication
-  setupKeybindings(config.session_name, config);
+  setupKeybindings(sessionName, config);
 
   console.log('');
   console.log('  Click the status bar or press Ctrl-b Space to open the action menu.');
@@ -244,5 +295,16 @@ function launch(toolArgs, opts) {
   console.log('');
 
   // Attach to the session (hands over terminal)
-  attachSession(config.session_name);
+  attachSession(sessionName);
+}
+
+function formatAge(createdTimestamp) {
+  const seconds = Math.floor(Date.now() / 1000) - createdTimestamp;
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ${minutes % 60}m`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ${hours % 24}h`;
 }
